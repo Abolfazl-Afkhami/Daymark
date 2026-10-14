@@ -17,6 +17,12 @@ build/
 *.sqlite-*
 backups/
 
+# Archives
+*.rar
+*.zip
+*.tar.gz
+*.tgz
+
 # Environment variables
 .env
 .env*.local
