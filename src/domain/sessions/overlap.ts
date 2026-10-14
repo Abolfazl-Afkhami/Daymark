@@ -33,13 +33,16 @@ export function computeNetFocusedMinutes(intervals: TimeInterval[]): number {
     .filter((i) => i.end > i.start)
     .sort((a, b) => a.start - b.start);
 
-  if (sorted.length === 0) return 0;
+  const first = sorted[0];
+  if (!first) return 0;
 
-  const merged: Array<{ start: number; end: number }> = [sorted[0]];
+  const merged: Array<{ start: number; end: number }> = [{ ...first }];
 
   for (let i = 1; i < sorted.length; i++) {
     const current = sorted[i];
     const last = merged[merged.length - 1];
+
+    if (!current || !last) continue;
 
     if (current.start < last.end) {
       last.end = Math.max(last.end, current.end);
