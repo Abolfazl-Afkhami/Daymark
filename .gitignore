@@ -12,9 +12,9 @@ build/
 
 # SQLite databases & backups
 *.db
+*.db-*
 *.sqlite
-*.sqlite-wal
-*.sqlite-shm
+*.sqlite-*
 backups/
 
 # Environment variables
