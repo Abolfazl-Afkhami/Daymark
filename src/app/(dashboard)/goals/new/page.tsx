@@ -1,48 +1,8 @@
 import { db } from '@/db/client';
-import { categories, habits } from '@/db/schema';
+import { categories } from '@/db/schema';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { goals } from '@/db/schema';
-
-async function createGoalAction(formData: FormData) {
-  'use server';
-
-  const title = formData.get('title') as string;
-  const categoryId = formData.get('categoryId') as string;
-  const description = (formData.get('description') as string) || null;
-  const targetValue = Number(formData.get('targetValue'));
-  const unit = (formData.get('unit') as string) || 'ساعت';
-  const progressSource = (formData.get('progressSource') as string) || 'MANUAL';
-  const deadlineDate = (formData.get('deadlineDate') as string) || null;
-
-  if (!title || !categoryId || !targetValue) {
-    throw new Error('Title, category, and target value are required');
-  }
-
-  const now = new Date().toISOString();
-  const todayCivil = now.slice(0, 10);
-
-  db.insert(goals).values({
-    id: `goal_${Date.now()}`,
-    categoryId,
-    title,
-    description,
-    status: 'ACTIVE',
-    startDate: todayCivil,
-    deadlineDate,
-    progressSource: progressSource as any,
-    targetValue,
-    manualCurrentValue: 0,
-    unit,
-    createdAt: now,
-    updatedAt: now,
-  }).run();
-
-  revalidatePath('/goals');
-  redirect('/goals');
-}
+import { createGoalAction } from '@/application/actions/goal-actions';
 
 export default async function NewGoalPage() {
   const allCategories = await db.select().from(categories).all();

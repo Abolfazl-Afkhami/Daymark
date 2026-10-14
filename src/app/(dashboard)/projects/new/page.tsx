@@ -1,42 +1,8 @@
 import { db } from '@/db/client';
-import { categories, projects, goals } from '@/db/schema';
+import { categories, goals } from '@/db/schema';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-
-async function createProjectAction(formData: FormData) {
-  'use server';
-
-  const title = formData.get('title') as string;
-  const categoryId = formData.get('categoryId') as string;
-  const goalId = (formData.get('goalId') as string) || null;
-  const description = (formData.get('description') as string) || null;
-  const deadlineDate = (formData.get('deadlineDate') as string) || null;
-
-  if (!title || !categoryId) {
-    throw new Error('Title and category are required');
-  }
-
-  const now = new Date().toISOString();
-
-  db.insert(projects).values({
-    id: `proj_${Date.now()}`,
-    categoryId,
-    goalId,
-    title,
-    description,
-    status: 'ACTIVE',
-    deadlineDate,
-    sortOrder: 0,
-    createdAt: now,
-    updatedAt: now,
-  }).run();
-
-  revalidatePath('/projects');
-  revalidatePath('/goals');
-  redirect('/projects');
-}
+import { createProjectAction } from '@/application/actions/project-actions';
 
 export default async function NewProjectPage() {
   const allCategories = await db.select().from(categories).all();

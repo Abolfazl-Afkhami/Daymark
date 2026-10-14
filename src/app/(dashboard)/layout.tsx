@@ -1,6 +1,7 @@
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Header } from '@/components/navigation/Header';
+import { CommandPalette } from '@/components/navigation/CommandPalette';
 
 export default function DashboardLayout({
   children,
@@ -24,6 +25,9 @@ export default function DashboardLayout({
 
         {/* Fixed Mobile Bottom Nav */}
         <BottomNav />
+
+        {/* Command Palette (Ctrl+K) */}
+        <CommandPalette />
       </div>
     </div>
   );
