@@ -1,6 +1,9 @@
 import { db } from '@/db/client';
 import { categories, habits, habitLogs, studySessions } from '@/db/schema';
 import { HabitRow } from '@/components/today/HabitRow';
+import { SpacedRepetitionDeck } from '@/components/study/SpacedRepetitionDeck';
+import { StudyService } from '@/application/services/study-service';
+import { getLogicalToday } from '@/domain/calendar/civil-date';
 import { Plus, Flame, Clock, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { eq } from 'drizzle-orm';
@@ -8,9 +11,11 @@ import { eq } from 'drizzle-orm';
 export const dynamic = 'force-dynamic';
 
 export default async function TodayPage() {
+  const todayCivilDate = getLogicalToday(new Date(), 'Asia/Tehran', 4);
   const allCategories = await db.select().from(categories).all();
   const allHabits = await db.select().from(habits).all();
   const todaySessions = await db.select().from(studySessions).all();
+  const dueReviews = StudyService.getDueReviews(todayCivilDate);
 
   const totalFocusMinutes = todaySessions.reduce((acc, s) => acc + s.durationMinutes, 0);
   const totalQuestions = todaySessions.reduce((acc, s) => acc + (s.questionsCompleted ?? 0), 0);
@@ -70,6 +75,11 @@ export default async function TodayPage() {
             <Clock className="w-6 h-6" />
           </div>
         </div>
+      </section>
+
+      {/* Spaced Repetition (SM-2) Daily Deck */}
+      <section>
+        <SpacedRepetitionDeck items={dueReviews} todayCivilDate={todayCivilDate} />
       </section>
 
       {/* Core Habit List / Empty State */}

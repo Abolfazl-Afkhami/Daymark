@@ -21,9 +21,15 @@ if (!fs.existsSync(schemaPath) || !fs.existsSync(seedPath)) {
 const schemaSql = fs.readFileSync(schemaPath, 'utf8');
 const seedSql = fs.readFileSync(seedPath, 'utf8');
 
+// Filter PRAGMA statements which cannot run inside an explicit transaction in SQLite
+const cleanSchemaSql = schemaSql
+  .split('\n')
+  .filter((line) => !line.trim().toUpperCase().startsWith('PRAGMA '))
+  .join('\n');
+
 // Execute within a single atomic transaction
 const seedTransaction = db.transaction(() => {
-  db.exec(schemaSql);
+  db.exec(cleanSchemaSql);
   db.exec(seedSql);
 });
 

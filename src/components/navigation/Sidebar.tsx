@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, CheckCircle2, Clock, Target, BarChart3, Settings } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, Target, BarChart3, Settings, BookOpen } from 'lucide-react';
 
 const navItems = [
   { href: '/today', label: 'امروز (Today)', icon: Calendar },
   { href: '/habits', label: 'عادت‌ها (Habits)', icon: CheckCircle2 },
   { href: '/focus', label: 'تمرکز (Focus)', icon: Clock },
+  { href: '/vault', label: 'خزانه دانش (Vault)', icon: BookOpen },
   { href: '/goals', label: 'اهداف (Goals)', icon: Target },
   { href: '/analytics', label: 'تحلیل‌ها (Analytics)', icon: BarChart3 },
 ];

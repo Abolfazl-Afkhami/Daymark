@@ -4,7 +4,7 @@ PRAGMA foreign_keys = ON;
 PRAGMA busy_timeout = 5000;
 
 -- 1. Application Preferences (Single-row configuration table enforced by CHECK id = 1)
-CREATE TABLE app_preferences (
+CREATE TABLE IF NOT EXISTS app_preferences (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   ui_locale TEXT NOT NULL DEFAULT 'en' CHECK (ui_locale IN ('en', 'fa')),
   calendar_system TEXT NOT NULL DEFAULT 'gregorian' CHECK (calendar_system IN ('gregorian', 'persian')),
@@ -17,7 +17,7 @@ CREATE TABLE app_preferences (
 );
 
 -- 2. Categories
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
@@ -28,10 +28,10 @@ CREATE TABLE categories (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
-CREATE INDEX idx_categories_sort ON categories(is_archived, sort_order);
+CREATE INDEX IF NOT EXISTS idx_categories_sort ON categories(is_archived, sort_order);
 
 -- 3. Habits
-CREATE TABLE habits (
+CREATE TABLE IF NOT EXISTS habits (
   id TEXT PRIMARY KEY,
   category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   name TEXT NOT NULL,
@@ -46,10 +46,10 @@ CREATE TABLE habits (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
-CREATE INDEX idx_habits_category_status ON habits(category_id, status, sort_order);
+CREATE INDEX IF NOT EXISTS idx_habits_category_status ON habits(category_id, status, sort_order);
 
 -- 4. Habit Schedule Versions (Temporal versioning of schedules & targets)
-CREATE TABLE habit_schedule_versions (
+CREATE TABLE IF NOT EXISTS habit_schedule_versions (
   id TEXT PRIMARY KEY,
   habit_id TEXT NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
   effective_from_date TEXT NOT NULL CHECK (length(effective_from_date) = 10),
@@ -63,10 +63,10 @@ CREATE TABLE habit_schedule_versions (
   created_at TEXT NOT NULL,
   UNIQUE(habit_id, effective_from_date)
 );
-CREATE INDEX idx_schedule_versions_lookup ON habit_schedule_versions(habit_id, effective_from_date, effective_to_date);
+CREATE INDEX IF NOT EXISTS idx_schedule_versions_lookup ON habit_schedule_versions(habit_id, effective_from_date, effective_to_date);
 
 -- 5. Habit Pause Periods (Preserves exact pause windows for historical streak evaluation)
-CREATE TABLE habit_pause_periods (
+CREATE TABLE IF NOT EXISTS habit_pause_periods (
   id TEXT PRIMARY KEY,
   habit_id TEXT NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
   paused_from_date TEXT NOT NULL CHECK (length(paused_from_date) = 10),
@@ -74,10 +74,10 @@ CREATE TABLE habit_pause_periods (
   reason TEXT,
   created_at TEXT NOT NULL
 );
-CREATE INDEX idx_pause_periods_habit ON habit_pause_periods(habit_id, paused_from_date);
+CREATE INDEX IF NOT EXISTS idx_pause_periods_habit ON habit_pause_periods(habit_id, paused_from_date);
 
 -- 6. Habit Completion Logs
-CREATE TABLE habit_logs (
+CREATE TABLE IF NOT EXISTS habit_logs (
   id TEXT PRIMARY KEY,
   habit_id TEXT NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
   log_date TEXT NOT NULL CHECK (length(log_date) = 10),
@@ -91,11 +91,11 @@ CREATE TABLE habit_logs (
   updated_at TEXT NOT NULL,
   UNIQUE(habit_id, log_date)
 );
-CREATE INDEX idx_habit_logs_date ON habit_logs(log_date, status);
-CREATE INDEX idx_habit_logs_habit_date ON habit_logs(habit_id, log_date DESC);
+CREATE INDEX IF NOT EXISTS idx_habit_logs_date ON habit_logs(log_date, status);
+CREATE INDEX IF NOT EXISTS idx_habit_logs_habit_date ON habit_logs(habit_id, log_date DESC);
 
 -- 7. Goals
-CREATE TABLE goals (
+CREATE TABLE IF NOT EXISTS goals (
   id TEXT PRIMARY KEY,
   category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   title TEXT NOT NULL,
@@ -114,10 +114,10 @@ CREATE TABLE goals (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
-CREATE INDEX idx_goals_status_category ON goals(status, category_id);
+CREATE INDEX IF NOT EXISTS idx_goals_status_category ON goals(status, category_id);
 
 -- 8. Projects
-CREATE TABLE projects (
+CREATE TABLE IF NOT EXISTS projects (
   id TEXT PRIMARY KEY,
   category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   goal_id TEXT REFERENCES goals(id) ON DELETE SET NULL,
@@ -129,10 +129,10 @@ CREATE TABLE projects (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
-CREATE INDEX idx_projects_status_goal ON projects(status, goal_id);
+CREATE INDEX IF NOT EXISTS idx_projects_status_goal ON projects(status, goal_id);
 
 -- 9. Tasks and Subtasks (Max 1 nesting level enforced in application service)
-CREATE TABLE tasks (
+CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY,
   project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
   parent_task_id TEXT REFERENCES tasks(id) ON DELETE CASCADE,
@@ -148,11 +148,11 @@ CREATE TABLE tasks (
   updated_at TEXT NOT NULL,
   CHECK (id != parent_task_id)
 );
-CREATE INDEX idx_tasks_due_status ON tasks(status, due_date, priority);
-CREATE INDEX idx_tasks_project ON tasks(project_id, parent_task_id, sort_order);
+CREATE INDEX IF NOT EXISTS idx_tasks_due_status ON tasks(status, due_date, priority);
+CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id, parent_task_id, sort_order);
 
 -- 10. Study and Work Sessions
-CREATE TABLE study_sessions (
+CREATE TABLE IF NOT EXISTS study_sessions (
   id TEXT PRIMARY KEY,
   category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
@@ -173,5 +173,59 @@ CREATE TABLE study_sessions (
   updated_at TEXT NOT NULL,
   CHECK (end_time_utc > start_time_utc)
 );
-CREATE INDEX idx_sessions_date_category ON study_sessions(session_date DESC, category_id);
-CREATE INDEX idx_sessions_utc_window ON study_sessions(start_time_utc, end_time_utc);
+CREATE INDEX IF NOT EXISTS idx_sessions_date_category ON study_sessions(session_date DESC, category_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_utc_window ON study_sessions(start_time_utc, end_time_utc);
+
+-- 11. Spaced Repetition (SM-2)
+CREATE TABLE IF NOT EXISTS study_reviews (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  area_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
+  project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+  repetition_count INTEGER NOT NULL DEFAULT 0,
+  ease_factor REAL NOT NULL DEFAULT 2.5,
+  interval_days INTEGER NOT NULL DEFAULT 1,
+  next_review_date TEXT NOT NULL, -- YYYY-MM-DD (Civil Date)
+  last_reviewed_date TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_study_reviews_next_date ON study_reviews(next_review_date);
+
+-- 12. Practice & Test Analytics
+CREATE TABLE IF NOT EXISTS practice_logs (
+  id TEXT PRIMARY KEY,
+  session_id TEXT REFERENCES study_sessions(id) ON DELETE CASCADE,
+  area_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
+  topic TEXT NOT NULL,
+  total_questions INTEGER NOT NULL CHECK (total_questions > 0),
+  correct_count INTEGER NOT NULL DEFAULT 0,
+  wrong_count INTEGER NOT NULL DEFAULT 0,
+  blank_count INTEGER NOT NULL DEFAULT 0,
+  duration_minutes INTEGER NOT NULL DEFAULT 0,
+  civil_date TEXT NOT NULL, -- YYYY-MM-DD
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_practice_logs_date ON practice_logs(civil_date);
+
+-- 13. TIL / Knowledge Vault & Snippets
+CREATE TABLE IF NOT EXISTS knowledge_notes (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL, -- Markdown / Code / LaTeX
+  language TEXT DEFAULT 'markdown', -- ts, python, rust, cpp, sql, math, markdown
+  tags TEXT NOT NULL DEFAULT '[]', -- JSON Array of tags
+  area_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
+  is_pinned INTEGER NOT NULL DEFAULT 0,
+  civil_date TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- SQLite FTS5 Full-Text Search Virtual Table
+CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_notes_fts USING fts5(
+  note_id UNINDEXED,
+  title,
+  content,
+  tags
+);

@@ -22,6 +22,7 @@ backups/
 *.zip
 *.tar.gz
 *.tgz
+v1.0/
 
 # Environment variables
 .env
