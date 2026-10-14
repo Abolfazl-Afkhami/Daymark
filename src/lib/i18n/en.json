@@ -1,0 +1,32 @@
+{
+  "app": {
+    "name": "Daymark",
+    "today": "Today",
+    "habits": "Habits",
+    "focus": "Focus",
+    "goals": "Goals",
+    "analytics": "Analytics",
+    "settings": "Settings"
+  },
+  "today": {
+    "title": "Today's Overview",
+    "progress": "Habits Progress",
+    "focused_time": "Focused Time Today",
+    "questions_solved": "questions solved",
+    "no_habits": "No habits scheduled for today. Create your first habit or load your starter template."
+  },
+  "habits": {
+    "title": "Habits",
+    "streak": "Streak",
+    "best": "Best",
+    "completed": "Completed",
+    "skipped": "Skipped",
+    "missed": "Missed"
+  },
+  "categories": {
+    "academic": "Academic Studies",
+    "ai_engineering": "AI Engineering",
+    "programming": "Programming & Development",
+    "personal": "Personal Development"
+  }
+}
