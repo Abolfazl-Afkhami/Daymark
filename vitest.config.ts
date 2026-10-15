@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    exclude: ['**/node_modules/**', '**/v1.0/**', '**/.next/**'],
+    exclude: ['**/node_modules/**', '**/v1.*/**', '**/.next/**'],
   },
   resolve: {
     alias: {

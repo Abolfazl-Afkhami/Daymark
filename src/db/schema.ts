@@ -9,7 +9,9 @@ export const appPreferences = sqliteTable('app_preferences', {
   timeZone: text('time_zone').notNull().default('UTC'),
   weekStartDay: integer('week_start_day').notNull().default(1),
   dayRolloverHour: integer('day_rollover_hour').notNull().default(4),
-  theme: text('theme').notNull().default('system'),
+  theme: text('theme', { enum: ['light', 'dark', 'sepia', 'oled', 'system'] })
+    .notNull()
+    .default('system'),
   updatedAt: text('updated_at').notNull(),
 });
 
@@ -219,5 +221,38 @@ export const knowledgeNotes = sqliteTable('knowledge_notes', {
   areaId: text('area_id').references(() => categories.id, { onDelete: 'set null' }),
   isPinned: integer('is_pinned').notNull().default(0),
   civilDate: text('civil_date').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+// 14. Comprehensive Mock Exams (v1.1.2)
+export const mockExams = sqliteTable('mock_exams', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  organization: text('organization'),
+  examDate: text('exam_date').notNull(),
+  totalTaraz: integer('total_taraz'),
+  rankCity: integer('rank_city'),
+  rankCountry: integer('rank_country'),
+  overallPercentage: real('overall_percentage').notNull().default(0),
+  durationMinutes: integer('duration_minutes').notNull().default(0),
+  notes: text('notes'),
+  createdAt: text('created_at').notNull(),
+});
+
+// 15. Mock Exam Subjects & Per-Course Breakdown (v1.1.2)
+export const mockExamSubjects = sqliteTable('mock_exam_subjects', {
+  id: text('id').primaryKey(),
+  examId: text('exam_id')
+    .notNull()
+    .references(() => mockExams.id, { onDelete: 'cascade' }),
+  areaId: text('area_id').references(() => categories.id, { onDelete: 'set null' }),
+  subjectName: text('subject_name').notNull(),
+  coefficient: integer('coefficient').notNull().default(1),
+  totalQuestions: integer('total_questions').notNull(),
+  correctCount: integer('correct_count').notNull().default(0),
+  wrongCount: integer('wrong_count').notNull().default(0),
+  blankCount: integer('blank_count').notNull().default(0),
+  rawPercentage: real('raw_percentage').notNull().default(0),
+  subjectTaraz: integer('subject_taraz'),
   createdAt: text('created_at').notNull(),
 });

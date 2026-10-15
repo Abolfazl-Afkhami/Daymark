@@ -1,57 +1,43 @@
+// src/app/api/backup/route.ts
 import { NextResponse } from 'next/server';
-import { db } from '@/db/client';
-import {
-  appPreferences,
-  categories,
-  habits,
-  habitScheduleVersions,
-  habitPausePeriods,
-  habitLogs,
-  goals,
-  projects,
-  tasks,
-  studySessions,
-} from '@/db/schema';
+import { sqlite } from '@/db/client';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const preferences = await db.select().from(appPreferences).all();
-    const allCategories = await db.select().from(categories).all();
-    const allHabits = await db.select().from(habits).all();
-    const allVersions = await db.select().from(habitScheduleVersions).all();
-    const allPauses = await db.select().from(habitPausePeriods).all();
-    const allLogs = await db.select().from(habitLogs).all();
-    const allGoals = await db.select().from(goals).all();
-    const allProjects = await db.select().from(projects).all();
-    const allTasks = await db.select().from(tasks).all();
-    const allSessions = await db.select().from(studySessions).all();
-
-    const backupPayload = {
-      schemaVersion: '1.0.0',
+    const payload = {
+      schemaVersion: '1.1.2',
       exportedAtUtc: new Date().toISOString(),
-      preferences: preferences[0] || null,
-      categories: allCategories,
-      habits: allHabits,
-      habitScheduleVersions: allVersions,
-      habitPausePeriods: allPauses,
-      habitLogs: allLogs,
-      goals: allGoals,
-      projects: allProjects,
-      tasks: allTasks,
-      studySessions: allSessions,
+      preferences: sqlite.prepare('SELECT * FROM app_preferences').all(),
+      categories: sqlite.prepare('SELECT * FROM categories').all(),
+      habits: sqlite.prepare('SELECT * FROM habits').all(),
+      habitScheduleVersions: sqlite.prepare('SELECT * FROM habit_schedule_versions').all(),
+      habitPausePeriods: sqlite.prepare('SELECT * FROM habit_pause_periods').all(),
+      habitLogs: sqlite.prepare('SELECT * FROM habit_logs').all(),
+      goals: sqlite.prepare('SELECT * FROM goals').all(),
+      projects: sqlite.prepare('SELECT * FROM projects').all(),
+      tasks: sqlite.prepare('SELECT * FROM tasks').all(),
+      studySessions: sqlite.prepare('SELECT * FROM study_sessions').all(),
+      knowledgeNotes: sqlite.prepare('SELECT * FROM knowledge_notes').all(),
+      studyReviews: sqlite.prepare('SELECT * FROM study_reviews').all(),
+      practiceLogs: sqlite.prepare('SELECT * FROM practice_logs').all(),
+      mockExams: sqlite.prepare('SELECT * FROM mock_exams').all(),
+      mockExamSubjects: sqlite.prepare('SELECT * FROM mock_exam_subjects').all(),
     };
 
-    return new NextResponse(JSON.stringify(backupPayload, null, 2), {
+    const dateStr = new Date().toISOString().slice(0, 10);
+    return new NextResponse(JSON.stringify(payload, null, 2), {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename="daymark-backup-${new Date().toISOString().slice(0, 10)}.json"`,
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Disposition': `attachment; filename="daymark-backup-v1.1.2-${dateStr}.json"`,
       },
     });
-  } catch (error) {
-    console.error('Backup Error:', error);
-    return NextResponse.json({ error: 'Failed to generate backup' }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: 'خطا در تولید فایل پشتیبان', details: err?.message },
+      { status: 500 }
+    );
   }
 }

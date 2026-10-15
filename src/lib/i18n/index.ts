@@ -1,21 +1,26 @@
-import en from './en.json';
-import fa from './fa.json';
+import { fa } from './fa';
+import { en } from './en';
+import { Dictionary, Locale } from './types';
 import { CivilDate } from '@/domain/calendar/civil-date';
 import { formatCivilDateToJalali } from '@/domain/calendar/jalali';
 
-export type Locale = 'fa' | 'en';
-export type Dictionary = typeof fa;
+export * from './types';
+export { fa, en };
+export { I18nProvider, useI18n } from './provider';
 
-const dictionaries = {
+const dictionaries: Record<Locale, Dictionary> = {
   fa,
-  en: en as unknown as Dictionary,
+  en,
 };
 
 export function getDictionary(locale: Locale = 'fa'): Dictionary {
   return dictionaries[locale] || dictionaries.fa;
 }
 
-export function formatDate(civilDate: CivilDate, calendar: 'persian' | 'gregorian' = 'persian'): string {
+export function formatDate(
+  civilDate: CivilDate,
+  calendar: 'persian' | 'gregorian' = 'persian'
+): string {
   if (calendar === 'persian') {
     return formatCivilDateToJalali(civilDate);
   }

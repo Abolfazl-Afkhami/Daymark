@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS app_preferences (
   time_zone TEXT NOT NULL DEFAULT 'UTC',
   week_start_day INTEGER NOT NULL DEFAULT 1 CHECK (week_start_day BETWEEN 0 AND 6),
   day_rollover_hour INTEGER NOT NULL DEFAULT 4 CHECK (day_rollover_hour BETWEEN 0 AND 6),
-  theme TEXT NOT NULL DEFAULT 'system' CHECK (theme IN ('light', 'dark', 'system')),
+  theme TEXT NOT NULL DEFAULT 'system' CHECK (theme IN ('light', 'dark', 'sepia', 'oled', 'system')),
   updated_at TEXT NOT NULL
 );
 
@@ -229,3 +229,38 @@ CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_notes_fts USING fts5(
   content,
   tags
 );
+
+-- 14. Comprehensive Mock Exams (v1.1.2)
+CREATE TABLE IF NOT EXISTS mock_exams (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  organization TEXT,
+  exam_date TEXT NOT NULL CHECK (length(exam_date) = 10),
+  total_taraz INTEGER,
+  rank_city INTEGER,
+  rank_country INTEGER,
+  overall_percentage REAL NOT NULL DEFAULT 0,
+  duration_minutes INTEGER NOT NULL DEFAULT 0,
+  notes TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_mock_exams_date ON mock_exams(exam_date DESC);
+
+-- 15. Mock Exam Subjects & Per-Course Percentages / Taraz (v1.1.2)
+CREATE TABLE IF NOT EXISTS mock_exam_subjects (
+  id TEXT PRIMARY KEY,
+  exam_id TEXT NOT NULL REFERENCES mock_exams(id) ON DELETE CASCADE,
+  area_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
+  subject_name TEXT NOT NULL,
+  coefficient INTEGER NOT NULL DEFAULT 1 CHECK (coefficient >= 1),
+  total_questions INTEGER NOT NULL CHECK (total_questions > 0),
+  correct_count INTEGER NOT NULL DEFAULT 0,
+  wrong_count INTEGER NOT NULL DEFAULT 0,
+  blank_count INTEGER NOT NULL DEFAULT 0,
+  raw_percentage REAL NOT NULL DEFAULT 0,
+  subject_taraz INTEGER,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_mock_exam_subjects_exam ON mock_exam_subjects(exam_id);

@@ -1,168 +1,180 @@
 // src/components/study/SpacedRepetitionDeck.tsx
 'use client';
 
-import { useTransition, useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import {
-  gradeReviewAction,
+  createReviewItemAction,
+  submitReviewQualityAction,
   createReviewAction,
-  deleteReviewAction,
+  gradeReviewAction,
 } from '@/application/actions/study-actions';
-import { ReviewQuality } from '@/domain/study/study-engine';
-import { BrainCircuit, Plus, Sparkles, CheckCircle, Trash2, RotateCcw } from 'lucide-react';
+import { deleteStudyReviewAction } from '@/application/actions/delete-actions';
+import { DeleteConfirmButton } from '@/components/ui/DeleteConfirmButton';
+import { BrainCircuit, Plus, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export interface ReviewItem {
   id: string;
   title: string;
+  area_id?: string | null;
   repetition_count: number;
   ease_factor: number;
   interval_days: number;
   next_review_date: string;
 }
 
-export function SpacedRepetitionDeck({
-  items,
-  todayCivilDate,
-}: {
-  items: ReviewItem[];
-  todayCivilDate: string;
-}) {
-  const [isPending, startTransition] = useTransition();
+interface Props {
+  dueReviews?: ReviewItem[];
+  items?: ReviewItem[];
+  todayCivilDate?: string;
+}
+
+export function SpacedRepetitionDeck({ dueReviews, items, todayCivilDate }: Props) {
+  const reviews = dueReviews ?? items ?? [];
   const [newTitle, setNewTitle] = useState('');
-
-  const handleGrade = (id: string, quality: ReviewQuality) => {
-    startTransition(async () => {
-      await gradeReviewAction(id, quality, todayCivilDate);
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    startTransition(async () => {
-      await deleteReviewAction(id);
-    });
-  };
+  const [isPending, startTransition] = useTransition();
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
-    const titleToAdd = newTitle;
+    const title = newTitle.trim();
     setNewTitle('');
     startTransition(async () => {
-      await createReviewAction(titleToAdd, todayCivilDate);
+      if (todayCivilDate) {
+        await createReviewAction(title, todayCivilDate, 'cat_academic');
+      } else {
+        await createReviewItemAction({ title, areaId: 'cat_academic' });
+      }
+    });
+  };
+
+  const handleGrade = (id: string, quality: 1 | 3 | 5) => {
+    startTransition(async () => {
+      if (todayCivilDate) {
+        await gradeReviewAction(id, quality, todayCivilDate);
+      } else {
+        await submitReviewQualityAction(id, quality);
+      }
     });
   };
 
   return (
-    <div className="bg-surface border border-border-subtle rounded-2xl p-5 shadow-sm space-y-4">
+    <div className="bg-surface border border-border-subtle rounded-2xl p-5 shadow-sm space-y-4 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5 min-w-0">
+          <div className="p-2 rounded-xl bg-accent/10 text-accent shrink-0 mt-0.5">
             <BrainCircuit className="w-5 h-5" />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-text-main">
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-text-main leading-snug">
               مرورهای هوشمند امروز (الگوریتم SM-2)
-            </h3>
-            <p className="text-xs text-text-muted">
+            </h2>
+            <p className="text-xs text-text-muted mt-1 leading-relaxed">
               مباحث تحصیلی و مفاهیم مهندسی که طبق منحنی فراموشی موعد تثبیت آن‌هاست
             </p>
           </div>
         </div>
-        <span className="rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent border border-accent/20">
-          {items.length} مورد فعال
+
+        <span className="px-2.5 py-1 rounded-full bg-accent/15 text-accent border border-accent/30 text-xs font-bold whitespace-nowrap shrink-0 tabular-nums">
+          {reviews.length} مورد فعال
         </span>
       </div>
 
-      {/* Quick Add Form */}
-      <form onSubmit={handleAdd} className="flex gap-2">
+      {/* Add New Review Topic Form */}
+      <form onSubmit={handleAdd} className="flex items-center gap-2">
         <input
           type="text"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
-          placeholder="افزودن مبحث جدید به چرخه مرور (مثلاً: مشتق ضمنی، Rust Lifetimes یا Docker Volumes)..."
-          className="flex-1 rounded-xl border border-border-subtle bg-canvas px-3.5 py-2 text-sm text-text-main placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-all"
+          placeholder="افزودن مبحث جدید به چرخه مرور..."
+          className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border-subtle bg-canvas text-xs text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent"
         />
         <button
           type="submit"
           disabled={isPending || !newTitle.trim()}
-          className="flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-white hover:opacity-95 disabled:opacity-50 transition-all shadow-sm shrink-0"
+          className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl bg-accent text-white text-xs font-bold whitespace-nowrap shrink-0 hover:opacity-95 transition-opacity disabled:opacity-50"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           <span>ثبت مبحث</span>
         </button>
       </form>
 
-      {/* Cards List or Empty State */}
-      {items.length === 0 ? (
-        <div className="py-6 px-4 rounded-xl bg-canvas border border-dashed border-border-subtle text-center space-y-2">
-          <div className="w-10 h-10 rounded-full bg-status-complete/10 text-status-complete mx-auto flex items-center justify-center">
-            <CheckCircle className="w-5 h-5" />
+      {/* Due Review Cards List */}
+      {reviews.length === 0 ? (
+        <div className="py-6 px-4 rounded-xl bg-elevated/40 border border-border-subtle text-center space-y-1.5">
+          <CheckCircle2 className="w-6 h-6 text-status-complete mx-auto" />
+          <div className="text-xs font-bold text-text-main">
+            تمام مرورهای سررسید شده امروز تکمیل شده‌اند!
           </div>
-          <p className="text-sm font-semibold text-text-main">
-            عالیه! تمام مرورهای برنامه‌ریزی‌شده تا امروز تکمیل شده‌اند.
-          </p>
-          <p className="text-xs text-text-muted">
-            هر نکته، فرمول یا مفهوم جدیدی که یاد می‌گیرید را برای تثبیت در حافظه بلندمدت ثبت کنید.
+          <p className="text-[11px] text-text-muted">
+            مباحث جدید را از کادر بالا اضافه کنید تا در بازه‌های بهینه یادآوری شوند.
           </p>
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {items.map((item) => (
+        <div className="space-y-3">
+          {reviews.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border-subtle bg-canvas p-3.5 hover:border-accent/40 transition-all"
+              className="p-3.5 rounded-xl bg-canvas/70 border border-border-subtle hover:border-accent/40 transition-colors space-y-3"
             >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-accent shrink-0" />
-                  <p className="text-sm font-semibold text-text-main">{item.title}</p>
+              {/* Top Row: Title + Metadata Badges + Delete Button */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-1.5 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-accent shrink-0" />
+                    <span className="text-sm font-bold text-text-main truncate">
+                      {item.title}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-text-muted tabular-nums">
+                    <span className="px-2 py-0.5 rounded-md bg-elevated border border-border-subtle whitespace-nowrap">
+                      مرور #{item.repetition_count}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-elevated border border-border-subtle whitespace-nowrap">
+                      بازه فعلی: {item.interval_days} روز
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-elevated border border-border-subtle whitespace-nowrap">
+                      ضریب آسانی: {Number(item.ease_factor).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-text-muted">
-                  <span>مرور #{item.repetition_count + 1}</span>
-                  <span>•</span>
-                  <span>بازه فعلی: {item.interval_days} روز</span>
-                  <span>•</span>
-                  <span>ضریب آسانی: {item.ease_factor}</span>
+
+                <div className="shrink-0">
+                  <DeleteConfirmButton
+                    itemLabel={item.title}
+                    onDelete={() => deleteStudyReviewAction(item.id)}
+                  />
                 </div>
               </div>
 
-              {/* Action Grading Buttons */}
-              <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+              {/* Bottom Row: 3 Equal-Width Rating Buttons */}
+              <div className="grid grid-cols-3 gap-2 pt-1 border-t border-border-subtle/60">
                 <button
                   type="button"
-                  onClick={() => handleGrade(item.id, 1)}
                   disabled={isPending}
-                  className="rounded-lg bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 text-xs font-medium text-rose-500 hover:bg-rose-500/20 disabled:opacity-50 transition-colors"
-                  title="فراموش کرده بودم (بازگشت به روز اول)"
+                  onClick={() => handleGrade(item.id, 1)}
+                  className="py-1.5 px-2 rounded-lg bg-status-missed/15 hover:bg-status-missed hover:text-white text-status-missed border border-status-missed/30 text-[11px] font-bold transition-colors text-center whitespace-nowrap"
                 >
                   فراموشی (۱ روز)
                 </button>
+
                 <button
                   type="button"
-                  onClick={() => handleGrade(item.id, 3)}
                   disabled={isPending}
-                  className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 text-xs font-medium text-amber-500 hover:bg-amber-500/20 disabled:opacity-50 transition-colors"
-                  title="به یاد آوردم اما با چالش و مکث"
+                  onClick={() => handleGrade(item.id, 3)}
+                  className="py-1.5 px-2 rounded-lg bg-status-partial/15 hover:bg-status-partial hover:text-white text-status-partial border border-status-partial/30 text-[11px] font-bold transition-colors text-center whitespace-nowrap"
                 >
                   متوسط
                 </button>
+
                 <button
                   type="button"
-                  onClick={() => handleGrade(item.id, 5)}
                   disabled={isPending}
-                  className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-500 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
-                  title="تسلط کامل و آسان"
+                  onClick={() => handleGrade(item.id, 5)}
+                  className="py-1.5 px-2 rounded-lg bg-status-complete/15 hover:bg-status-complete hover:text-white text-status-complete border border-status-complete/30 text-[11px] font-bold transition-colors text-center whitespace-nowrap"
                 >
                   مسلط
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(item.id)}
-                  disabled={isPending}
-                  className="p-1 rounded-lg text-text-muted hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
-                  title="حذف از چرخه مرور"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>

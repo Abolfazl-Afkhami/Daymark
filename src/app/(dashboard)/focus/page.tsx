@@ -3,6 +3,7 @@ import { categories, projects, goals, studySessions } from '@/db/schema';
 import { FocusTimer } from '@/components/focus/FocusTimer';
 import { desc } from 'drizzle-orm';
 import { Clock, BookOpen, CheckCircle } from 'lucide-react';
+import { SessionRow } from '@/components/focus/SessionRow';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,33 +50,17 @@ export default async function FocusPage() {
             {recentSessions.map((session) => {
               const cat = allCategories.find((c) => c.id === session.categoryId);
               return (
-                <div key={session.id} className="py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="w-2.5 h-6 rounded-full shrink-0"
-                      style={{ backgroundColor: cat?.colorHex || '#2563EB' }}
-                    />
-                    <div>
-                      <div className="text-sm font-semibold text-text-main">
-                        {session.subjectTag || session.sessionType}
-                      </div>
-                      <div className="text-xs text-text-muted">
-                        {session.sessionDate} • {cat?.name}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-end">
-                    <span className="text-sm font-bold text-accent font-mono">
-                      {session.durationMinutes} دقیقه
-                    </span>
-                    {session.questionsCompleted !== null && session.questionsCompleted > 0 && (
-                      <div className="text-xs text-text-muted">
-                        {session.questionsCompleted} تست حل‌شده
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <SessionRow
+                  key={session.id}
+                  id={session.id}
+                  categoryName={cat?.name || 'عمومی'}
+                  categoryColor={cat?.colorHex || '#2563EB'}
+                  subjectTag={session.subjectTag}
+                  sessionType={session.sessionType}
+                  sessionDate={session.sessionDate}
+                  durationMinutes={session.durationMinutes}
+                  questionsCompleted={session.questionsCompleted}
+                />
               );
             })}
           </div>

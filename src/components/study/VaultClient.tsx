@@ -1,7 +1,7 @@
 // src/components/study/VaultClient.tsx
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import {
   KnowledgeNoteRow,
   StudyReviewRow,
@@ -9,12 +9,14 @@ import {
 } from '@/application/services/study-service';
 import {
   addKnowledgeNoteAction,
-  deleteKnowledgeNoteAction,
   togglePinNoteAction,
   logPracticeTestAction,
 } from '@/application/actions/study-actions';
+import { deleteKnowledgeNoteAction } from '@/application/actions/delete-actions';
+import { DeleteConfirmButton } from '@/components/ui/DeleteConfirmButton';
 import { SpacedRepetitionDeck } from './SpacedRepetitionDeck';
 import { calculateTestMetrics } from '@/domain/study/study-engine';
+import { ExamAndPracticeManager, MockExamItem } from '@/components/vault/ExamAndPracticeManager';
 import {
   BookOpen,
   Code2,
@@ -35,26 +37,53 @@ import {
 interface CategoryItem {
   id: string;
   name: string;
+  colorHex?: string;
 }
 
 interface VaultClientProps {
+  initialTab?: string;
   initialNotes: KnowledgeNoteRow[];
   dueReviews: StudyReviewRow[];
   allReviews: StudyReviewRow[];
-  practiceLogs: PracticeLogRow[];
+  practiceLogs: any[];
+  mockExams?: MockExamItem[];
+  questionGoals?: Array<{ id: string; title: string }>;
   categories: CategoryItem[];
   todayCivilDate: string;
 }
 
+function resolveInitialTab(tab?: string): 'vault' | 'reviews' | 'practice' {
+  if (tab === 'notes' || tab === 'vault') return 'vault';
+  if (tab === 'reviews') return 'reviews';
+  if (tab === 'practice' || tab === 'exams') return 'practice';
+  return 'vault';
+}
+
+function resolveInitialEntryMode(tab?: string): 'PRACTICE' | 'MOCK_EXAM' {
+  if (tab === 'practice') return 'PRACTICE';
+  return 'MOCK_EXAM';
+}
+
 export function VaultClient({
+  initialTab,
   initialNotes,
   dueReviews,
   allReviews,
   practiceLogs,
+  mockExams = [],
+  questionGoals = [],
   categories,
   todayCivilDate,
 }: VaultClientProps) {
-  const [activeTab, setActiveTab] = useState<'vault' | 'reviews' | 'practice'>('vault');
+  const [activeTab, setActiveTab] = useState<'vault' | 'reviews' | 'practice'>(
+    resolveInitialTab(initialTab)
+  );
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(resolveInitialTab(initialTab));
+    }
+  }, [initialTab]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [isPending, startTransition] = useTransition();
@@ -362,18 +391,12 @@ export function VaultClient({
                         >
                           <Pin className={`w-3.5 h-3.5 ${note.is_pinned ? 'fill-accent text-accent' : ''}`} />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            startTransition(async () => {
-                              await deleteKnowledgeNoteAction(note.id);
-                            })
-                          }
-                          className="p-1 rounded text-text-muted hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
-                          title="حذف نکته"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <DeleteConfirmButton
+                          onDelete={() => deleteKnowledgeNoteAction(note.id)}
+                          itemLabel={note.title}
+                          confirmText="حذف"
+                          size="sm"
+                        />
                       </div>
                     </div>
 
@@ -448,171 +471,14 @@ export function VaultClient({
 
       {/* TAB 3: PRACTICE & EXAM ANALYTICS */}
       {activeTab === 'practice' && (
-        <div className="space-y-6">
-          {/* New Practice Log Form */}
-          <div className="bg-surface border border-border-subtle rounded-2xl p-5 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-text-main flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-accent" />
-              <span>ثبت آزمون آزمایشی، تست‌زنی یا حل مسئله</span>
-            </h3>
-
-            <form onSubmit={handleLogPractice} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-                <div className="md:col-span-2 space-y-1">
-                  <label className="text-xs font-medium text-text-muted">موضوع / درس</label>
-                  <input
-                    type="text"
-                    placeholder="مثلاً: ریاضی عمومی، فیزیک، الگوریتم لیت‌کد"
-                    value={practiceTopic}
-                    onChange={(e) => setPracticeTopic(e.target.value)}
-                    className="w-full rounded-xl border border-border-subtle bg-canvas px-3 py-2 text-sm text-text-main focus:border-accent focus:outline-none"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-text-muted">کل سوالات</label>
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="مثلاً: 30"
-                    value={totalQuestions}
-                    onChange={(e) =>
-                      setTotalQuestions(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    className="w-full rounded-xl border border-border-subtle bg-canvas px-3 py-2 text-sm text-text-main focus:border-accent focus:outline-none"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-emerald-400">تعداد درست</label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="مثلاً: 21"
-                    value={correctCount}
-                    onChange={(e) =>
-                      setCorrectCount(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    className="w-full rounded-xl border border-border-subtle bg-canvas px-3 py-2 text-sm text-text-main focus:border-accent focus:outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-rose-400">تعداد غلط</label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="مثلاً: 6"
-                    value={wrongCount}
-                    onChange={(e) =>
-                      setWrongCount(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    className="w-full rounded-xl border border-border-subtle bg-canvas px-3 py-2 text-sm text-text-main focus:border-accent focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-text-muted">مدت زمان (دقیقه)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="مثلاً: 45 دقیقه"
-                    value={durationMinutes}
-                    onChange={(e) =>
-                      setDurationMinutes(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    className="w-full rounded-xl border border-border-subtle bg-canvas px-3 py-2 text-sm text-text-main focus:border-accent focus:outline-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isPending || !practiceTopic.trim() || !totalQuestions}
-                  className="rounded-xl bg-accent py-2 px-5 text-sm font-semibold text-white hover:opacity-95 disabled:opacity-50 transition-all shadow-sm"
-                >
-                  {isPending ? 'در حال ثبت...' : '+ ثبت لاگ آزمون و محاسبه آمار'}
-                </button>
-              </div>
-
-              {/* Live Analytical Metrics Preview */}
-              {previewMetrics && (
-                <div className="mt-4 p-4 rounded-xl bg-canvas border border-border-subtle grid grid-cols-2 sm:grid-cols-4 gap-4 animate-in fade-in">
-                  <div>
-                    <span className="text-xs text-text-muted">درصد خام</span>
-                    <p className="text-lg font-bold text-text-main">{previewMetrics.rawPercentage}%</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-text-muted">درصد با نمره منفی (۳ غلط = ۱ درست)</span>
-                    <p className="text-lg font-bold text-accent">{previewMetrics.netPercentage}%</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-text-muted">دقت پاسخ‌گویی</span>
-                    <p className="text-lg font-bold text-emerald-400">{previewMetrics.accuracyRate}%</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-text-muted">زمان هر تست</span>
-                    <p className="text-lg font-bold text-text-main">{previewMetrics.secondsPerQuestion} ثانیه</p>
-                  </div>
-                </div>
-              )}
-            </form>
-          </div>
-
-          {/* Practice History */}
-          <div className="bg-surface border border-border-subtle rounded-2xl p-5 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-text-main">تاریخچه جلسات تست‌زنی اخیر</h3>
-
-            {practiceLogs.length === 0 ? (
-              <p className="text-xs text-text-muted text-center py-6">هنوز لاگ تستی ثبت نشده است.</p>
-            ) : (
-              <div className="space-y-3">
-                {practiceLogs.map((log) => {
-                  const metrics = calculateTestMetrics({
-                    totalQuestions: log.total_questions,
-                    correctCount: log.correct_count,
-                    wrongCount: log.wrong_count,
-                    durationMinutes: log.duration_minutes,
-                  });
-
-                  return (
-                    <div
-                      key={log.id}
-                      className="p-4 rounded-xl border border-border-subtle bg-canvas flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-text-main">{log.topic}</span>
-                          <span className="text-xs text-text-muted font-mono">{log.civil_date}</span>
-                        </div>
-                        <p className="text-xs text-text-muted">
-                          کل: {log.total_questions} • درست:{' '}
-                          <span className="text-emerald-400 font-semibold">{log.correct_count}</span> • غلط:{' '}
-                          <span className="text-rose-400 font-semibold">{log.wrong_count}</span> • نزده:{' '}
-                          <span>{log.blank_count}</span> • زمان: {log.duration_minutes} دقیقه
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-4 text-left font-mono">
-                        <div>
-                          <span className="text-[10px] text-text-muted block">نمره با منفی</span>
-                          <span className="text-base font-black text-accent">{metrics.netPercentage}%</span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-text-muted block">زمان/سوال</span>
-                          <span className="text-sm font-bold text-text-main">{metrics.secondsPerQuestion}s</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
+        <ExamAndPracticeManager
+          initialEntryMode={resolveInitialEntryMode(initialTab)}
+          categories={categories}
+          questionGoals={questionGoals}
+          practiceLogs={practiceLogs}
+          mockExams={mockExams}
+          todayDate={todayCivilDate}
+        />
       )}
     </div>
   );

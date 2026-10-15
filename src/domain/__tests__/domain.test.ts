@@ -124,3 +124,30 @@ describe('Study Engine & Engineering Tools', () => {
     expect(pace.requiredDailyPace).toBe(18);
   });
 });
+
+describe('v1.1.2 Mock Exam & Negative Marking Math', () => {
+  const calcRawPct = (correct: number, wrong: number, total: number) =>
+    Math.round((((correct * 3 - wrong) / (total * 3)) * 100) * 100) / 100;
+
+  it('computes standard 1/3 negative marking percentage accurately', () => {
+    // 30 درست، 3 غلط از 40 سوال -> (90 - 3) / 120 = 87 / 120 = 72.5%
+    expect(calcRawPct(30, 3, 40)).toBe(72.5);
+    // 0 درست، 6 غلط از 30 سوال -> -6 / 90 = -6.67%
+    expect(calcRawPct(0, 6, 30)).toBe(-6.67);
+  });
+
+  it('computes weighted average across multi-subject mock exams', () => {
+    const subjects = [
+      { coeff: 4, pct: 75 }, // ریاضی ضریب ۴: ۳۰۰
+      { coeff: 3, pct: 60 }, // فیزیک ضریب ۳: ۱۸۰
+      { coeff: 2, pct: 50 }, // شیمی ضریب ۲: ۱۰۰
+    ];
+    const weightedSum = subjects.reduce((acc, s) => acc + s.coeff * s.pct, 0);
+    const totalCoeff = subjects.reduce((acc, s) => acc + s.coeff, 0);
+    const overall = Math.round((weightedSum / totalCoeff) * 100) / 100;
+
+    // (300 + 180 + 100) / 9 = 580 / 9 = 64.44%
+    expect(overall).toBe(64.44);
+  });
+});
+

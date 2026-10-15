@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Check, Plus, AlertCircle } from 'lucide-react';
 import { toggleTaskAction, addTaskAction } from '@/application/actions/project-actions';
+import { deleteTaskAction } from '@/application/actions/delete-actions';
+import { DeleteConfirmButton } from '@/components/ui/DeleteConfirmButton';
 
 interface TaskItem {
   id: string;
@@ -111,6 +113,14 @@ export function TaskChecklist({
                   {task.priority === 'HIGH' && (
                     <span className="text-amber-500 font-semibold">مهم</span>
                   )}
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <DeleteConfirmButton
+                      onDelete={() => deleteTaskAction(task.id)}
+                      itemLabel={task.title}
+                      confirmText="حذف"
+                      size="sm"
+                    />
+                  </div>
                 </div>
               </div>
             );

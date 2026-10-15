@@ -33,6 +33,20 @@ export async function deleteReviewAction(id: string) {
   revalidatePath('/vault');
 }
 
+export async function createReviewItemAction(params: {
+  title: string;
+  areaId?: string;
+  projectId?: string;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  return createReviewAction(params.title, today, params.areaId, params.projectId);
+}
+
+export async function submitReviewQualityAction(id: string, quality: ReviewQuality) {
+  const today = new Date().toISOString().slice(0, 10);
+  return gradeReviewAction(id, quality, today);
+}
+
 export async function addKnowledgeNoteAction(formData: FormData) {
   const title = String(formData.get('title') ?? '');
   const content = String(formData.get('content') ?? '');

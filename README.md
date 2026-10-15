@@ -63,7 +63,7 @@ Daymark/
 │   │   │   ├── projects/      # پروژه‌ها و تسک‌ها
 │   │   │   ├── analytics/     # آمار و تحلیل‌ها
 │   │   │   └── settings/      # تنظیمات و تقویم
-│   │   └── layout.tsx         # لایوت ریشه با فونت Vazirmatn
+│   │   └── layout.tsx         # لایوت ریشه با فونت‌های مدرن Estedad و Vazirmatn RD
 │   ├── application/           # اکشن‌ها و سرویس‌های برنامه (StudyService, HabitService, ...)
 │   ├── components/            # کامپوننت‌های بصری، ناوبری و ماژول‌های مطالعه
 │   ├── db/                    # کلاینت دیتابیس، اسکیما و کدهای SQLite FTS5

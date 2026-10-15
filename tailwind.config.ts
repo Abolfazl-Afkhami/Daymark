@@ -9,6 +9,18 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: [
+          'Estedad',
+          'Vazirmatn RD',
+          'Vazirmatn',
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'sans-serif',
+        ],
+        mono: ['JetBrains Mono', 'Estedad', 'Vazirmatn RD', 'monospace'],
+      },
       colors: {
         canvas: 'var(--bg-canvas)',
         surface: 'var(--bg-surface)',
