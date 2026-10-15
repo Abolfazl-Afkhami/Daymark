@@ -241,4 +241,4 @@ For deep architectural specifications, database schemas, and formal streak rules
 ---
 
 ## 📄 License
-Released under the [MIT License](./LICENSE). Engineered by [Abolfazl Afkhami](https://github.com/Abolfazl-Afkhami).
+Released under the [MIT License](./LICENSE). Engineered by [Abolfazl Afkhami](www.linkedin.com/in/abolfazl-afkhami).
