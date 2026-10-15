@@ -1,7 +1,8 @@
 import { db } from '@/db/client';
 import { habits, categories, habitScheduleVersions } from '@/db/schema';
 import Link from 'next/link';
-import { Plus, CheckCircle2, Flame } from 'lucide-react';
+import { Plus, CheckCircle2 } from 'lucide-react';
+import { HabitCard } from '@/components/habits/HabitCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,35 +55,18 @@ export default async function HabitsPage() {
             const version = allVersions.find((v) => v.habitId === habit.id);
 
             return (
-              <div
+              <HabitCard
                 key={habit.id}
-                className="p-4 rounded-xl bg-surface border border-border-subtle shadow-sm space-y-3"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      className="w-2.5 h-8 rounded-full shrink-0"
-                      style={{ backgroundColor: cat?.colorHex || '#2563EB' }}
-                    />
-                    <div>
-                      <h3 className="text-sm font-bold text-text-main">{habit.name}</h3>
-                      <p className="text-xs text-text-muted">{cat?.name || 'عمومی'}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs px-2 py-0.5 rounded bg-elevated text-text-muted font-medium">
-                    {habit.habitType === 'QUANTITATIVE' ? 'کمّی' : 'باینری'}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-text-muted pt-2 border-t border-border-subtle">
-                  <span>زمان‌بندی: {version?.scheduleType || 'DAILY'}</span>
-                  {version?.targetValue && (
-                    <span>
-                      هدف: {version.targetValue} {version.targetUnit || 'واحد'}
-                    </span>
-                  )}
-                </div>
-              </div>
+                id={habit.id}
+                name={habit.name}
+                status={habit.status}
+                habitType={habit.habitType}
+                categoryName={cat?.name || 'عمومی'}
+                categoryColor={cat?.colorHex || '#2563EB'}
+                scheduleType={version?.scheduleType}
+                targetValue={version?.targetValue}
+                targetUnit={version?.targetUnit}
+              />
             );
           })}
         </div>

@@ -9,7 +9,9 @@ export const appPreferences = sqliteTable('app_preferences', {
   timeZone: text('time_zone').notNull().default('UTC'),
   weekStartDay: integer('week_start_day').notNull().default(1),
   dayRolloverHour: integer('day_rollover_hour').notNull().default(4),
-  theme: text('theme').notNull().default('system'),
+  theme: text('theme', { enum: ['light', 'dark', 'sepia', 'oled', 'system'] })
+    .notNull()
+    .default('system'),
   updatedAt: text('updated_at').notNull(),
 });
 
@@ -175,3 +177,82 @@ export const studySessions = sqliteTable('study_sessions', {
   index('idx_sessions_date_category').on(table.sessionDate, table.categoryId),
   index('idx_sessions_utc_window').on(table.startTimeUtc, table.endTimeUtc),
 ]);
+
+// 11. Study Reviews (Spaced Repetition SM-2)
+export const studyReviews = sqliteTable('study_reviews', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  areaId: text('area_id').references(() => categories.id, { onDelete: 'set null' }),
+  projectId: text('project_id').references(() => projects.id, { onDelete: 'set null' }),
+  repetitionCount: integer('repetition_count').notNull().default(0),
+  easeFactor: real('ease_factor').notNull().default(2.5),
+  intervalDays: integer('interval_days').notNull().default(1),
+  nextReviewDate: text('next_review_date').notNull(),
+  lastReviewedDate: text('last_reviewed_date'),
+  createdAt: text('created_at').notNull(),
+}, (table) => [
+  index('idx_study_reviews_next_date').on(table.nextReviewDate),
+]);
+
+// 12. Practice Logs & Problem-Solving
+export const practiceLogs = sqliteTable('practice_logs', {
+  id: text('id').primaryKey(),
+  sessionId: text('session_id').references(() => studySessions.id, { onDelete: 'cascade' }),
+  areaId: text('area_id').references(() => categories.id, { onDelete: 'set null' }),
+  topic: text('topic').notNull(),
+  totalQuestions: integer('total_questions').notNull(),
+  correctCount: integer('correct_count').notNull().default(0),
+  wrongCount: integer('wrong_count').notNull().default(0),
+  blankCount: integer('blank_count').notNull().default(0),
+  durationMinutes: integer('duration_minutes').notNull().default(0),
+  civilDate: text('civil_date').notNull(),
+  createdAt: text('created_at').notNull(),
+}, (table) => [
+  index('idx_practice_logs_date').on(table.civilDate),
+]);
+
+// 13. Knowledge Notes (TIL & Snippet Vault)
+export const knowledgeNotes = sqliteTable('knowledge_notes', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  language: text('language').default('markdown'),
+  tags: text('tags').notNull().default('[]'),
+  areaId: text('area_id').references(() => categories.id, { onDelete: 'set null' }),
+  isPinned: integer('is_pinned').notNull().default(0),
+  civilDate: text('civil_date').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+// 14. Comprehensive Mock Exams (v1.1.2)
+export const mockExams = sqliteTable('mock_exams', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  organization: text('organization'),
+  examDate: text('exam_date').notNull(),
+  totalTaraz: integer('total_taraz'),
+  rankCity: integer('rank_city'),
+  rankCountry: integer('rank_country'),
+  overallPercentage: real('overall_percentage').notNull().default(0),
+  durationMinutes: integer('duration_minutes').notNull().default(0),
+  notes: text('notes'),
+  createdAt: text('created_at').notNull(),
+});
+
+// 15. Mock Exam Subjects & Per-Course Breakdown (v1.1.2)
+export const mockExamSubjects = sqliteTable('mock_exam_subjects', {
+  id: text('id').primaryKey(),
+  examId: text('exam_id')
+    .notNull()
+    .references(() => mockExams.id, { onDelete: 'cascade' }),
+  areaId: text('area_id').references(() => categories.id, { onDelete: 'set null' }),
+  subjectName: text('subject_name').notNull(),
+  coefficient: integer('coefficient').notNull().default(1),
+  totalQuestions: integer('total_questions').notNull(),
+  correctCount: integer('correct_count').notNull().default(0),
+  wrongCount: integer('wrong_count').notNull().default(0),
+  blankCount: integer('blank_count').notNull().default(0),
+  rawPercentage: real('raw_percentage').notNull().default(0),
+  subjectTaraz: integer('subject_taraz'),
+  createdAt: text('created_at').notNull(),
+});

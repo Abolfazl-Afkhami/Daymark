@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@/db/client';
+import { db, sqlite } from '@/db/client';
 import { projects, tasks } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -84,4 +84,34 @@ export async function toggleTaskAction(taskId: string, projectId: string, curren
 
   revalidatePath(`/projects/${projectId}`);
   revalidatePath('/today');
+}
+
+export async function deleteProjectAction(projectId: string) {
+  sqlite.transaction(() => {
+    // tasks have ON DELETE CASCADE
+    // study_sessions have ON DELETE SET NULL
+    sqlite.prepare('DELETE FROM projects WHERE id = ?').run(projectId);
+  })();
+
+  revalidatePath('/projects');
+  revalidatePath('/today');
+  revalidatePath('/goals');
+  return { success: true };
+}
+
+export async function deleteTaskAction(taskId: string, projectId: string) {
+  sqlite.prepare('DELETE FROM tasks WHERE id = ?').run(taskId);
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath('/today');
+  return { success: true };
+}
+
+export async function archiveProjectAction(projectId: string) {
+  const now = new Date().toISOString();
+  sqlite.prepare(`UPDATE projects SET status = 'ARCHIVED', updated_at = ? WHERE id = ?`).run(now, projectId);
+
+  revalidatePath('/projects');
+  revalidatePath('/today');
+  return { success: true };
 }

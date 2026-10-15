@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight, FolderGit2 } from 'lucide-react';
 import { TaskChecklist } from '@/components/projects/TaskChecklist';
+import { DeleteProjectButton } from '@/components/projects/DeleteProjectButton';
 
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>;
@@ -37,25 +38,29 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
       {/* Top Breadcrumb & Title */}
-      <div className="flex items-center gap-3">
-        <Link
-          href="/projects"
-          className="p-1.5 rounded-lg hover:bg-elevated text-text-muted hover:text-text-main transition-colors"
-        >
-          <ArrowRight className="w-5 h-5 rtl:rotate-0 ltr:rotate-180" />
-        </Link>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight">{project.title}</h1>
-            <span className="text-xs px-2 py-0.5 rounded bg-elevated text-text-muted">
-              {project.status}
-            </span>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/projects"
+            className="p-1.5 rounded-lg hover:bg-elevated text-text-muted hover:text-text-main transition-colors"
+          >
+            <ArrowRight className="w-5 h-5 rtl:rotate-0 ltr:rotate-180" />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight">{project.title}</h1>
+              <span className="text-xs px-2 py-0.5 rounded bg-elevated text-text-muted">
+                {project.status}
+              </span>
+            </div>
+            <p className="text-xs text-text-muted mt-0.5">
+              {projectCategory?.name || 'عمومی'}
+              {project.deadlineDate ? ` • مهلت: ${project.deadlineDate}` : ''}
+            </p>
           </div>
-          <p className="text-xs text-text-muted mt-0.5">
-            {projectCategory?.name || 'عمومی'}
-            {project.deadlineDate ? ` • مهلت: ${project.deadlineDate}` : ''}
-          </p>
         </div>
+
+        <DeleteProjectButton projectId={project.id} title={project.title} />
       </div>
 
       {project.description && (

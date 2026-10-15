@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Square, Clock } from 'lucide-react';
+import { Play, Pause, Square, Clock, Headphones, Volume2, VolumeX } from 'lucide-react';
 import { logStudySessionAction } from '@/application/actions/session-actions';
+import { focusAudio } from '@/lib/audio/focus-audio';
 
 interface CategoryItem {
   id: string;
@@ -28,6 +29,7 @@ interface FocusTimerProps {
 
 export function FocusTimer({ categories, projects, goals }: FocusTimerProps) {
   const [isRunning, setIsRunning] = useState(false);
+  const [isBrownNoiseOn, setIsBrownNoiseOn] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [accumulatedMs, setAccumulatedMs] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -58,6 +60,22 @@ export function FocusTimer({ categories, projects, goals }: FocusTimerProps) {
     };
   }, [isRunning, startedAt, accumulatedMs]);
 
+  useEffect(() => {
+    return () => {
+      focusAudio.stopBrownNoise();
+    };
+  }, []);
+
+  const toggleBrownNoise = () => {
+    if (isBrownNoiseOn) {
+      focusAudio.stopBrownNoise();
+      setIsBrownNoiseOn(false);
+    } else {
+      focusAudio.startBrownNoise(0.15);
+      setIsBrownNoiseOn(true);
+    }
+  };
+
   const handleStart = () => {
     setStartedAt(Date.now());
     setIsRunning(true);
@@ -74,6 +92,11 @@ export function FocusTimer({ categories, projects, goals }: FocusTimerProps) {
   const handleStopAndSave = async () => {
     const totalMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
 
+    if (isBrownNoiseOn) {
+      focusAudio.stopBrownNoise();
+      setIsBrownNoiseOn(false);
+    }
+
     const formData = new FormData();
     formData.append('categoryId', categoryId);
     if (projectId) formData.append('projectId', projectId);
@@ -85,6 +108,12 @@ export function FocusTimer({ categories, projects, goals }: FocusTimerProps) {
     if (notes) formData.append('notes', notes);
 
     await logStudySessionAction(formData);
+
+    // Play chime and send desktop notification
+    focusAudio.notifySessionComplete(
+      'پایان جلسه تمرکز!',
+      `جلسه ${totalMinutes} دقیقه‌ای با موفقیت در سیستم ثبت شد.`
+    );
 
     // Reset timer
     setIsRunning(false);
@@ -114,8 +143,8 @@ export function FocusTimer({ categories, projects, goals }: FocusTimerProps) {
           {formattedTime}
         </div>
 
-        {/* Play/Pause/Stop Controls */}
-        <div className="flex items-center gap-3 mt-6">
+        {/* Play/Pause/Stop Controls + Audio */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
           {!isRunning ? (
             <button
               type="button"
@@ -146,6 +175,30 @@ export function FocusTimer({ categories, projects, goals }: FocusTimerProps) {
               <span>پایان و ذخیره جلسه</span>
             </button>
           )}
+
+          {/* Procedural Web Audio Brown Noise Generator */}
+          <button
+            type="button"
+            onClick={toggleBrownNoise}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm active:scale-95 ${
+              isBrownNoiseOn
+                ? 'bg-indigo-600 text-white hover:bg-indigo-500 ring-2 ring-indigo-400/50'
+                : 'bg-elevated text-text-muted hover:text-text-main hover:bg-border-subtle border border-border-subtle'
+            }`}
+            title="پخش صدای آرامش‌بخش Brown Noise با Web Audio API برای حذف نویز محیط"
+          >
+            {isBrownNoiseOn ? (
+              <>
+                <Volume2 className="w-4 h-4 animate-pulse text-white" />
+                <span>صدای تمرکز (روشن)</span>
+              </>
+            ) : (
+              <>
+                <Headphones className="w-4 h-4" />
+                <span>صدای تمرکز (Brown Noise)</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 

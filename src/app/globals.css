@@ -2,44 +2,96 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg-canvas: #F8FAFC;
-  --bg-surface: #FFFFFF;
-  --bg-elevated: #F1F5F9;
-  --text-primary: #0F172A;
+/* 1. Light Theme (Default) */
+:root,
+[data-theme='light'] {
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f1f5f9;
+  --text-primary: #0f172a;
   --text-secondary: #475569;
-  --border-subtle: #E2E8F0;
-  --accent-primary: #2563EB;
-  --status-complete: #16A34A;
-  --status-partial: #D97706;
-  --status-skipped: #64748B;
-  --status-missed: #DC2626;
-
+  --border-subtle: #e2e8f0;
+  --accent-primary: #2563eb;
+  --status-complete: #16a34a;
+  --status-partial: #d97706;
+  --status-skipped: #64748b;
+  --status-missed: #dc2626;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  color-scheme: light;
 }
 
-.dark {
-  --bg-canvas: #090D16;
+/* 2. Dark Theme (Slate Night) */
+.dark,
+[data-theme='dark'] {
+  --bg-canvas: #090d16;
   --bg-surface: #111827;
-  --bg-elevated: #1E293B;
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --border-subtle: #1E293B;
-  --accent-primary: #3B82F6;
-  --status-complete: #22C55E;
-  --status-partial: #F59E0B;
-  --status-skipped: #94A3B8;
-  --status-missed: #EF4444;
+  --bg-elevated: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-subtle: #1e293b;
+  --accent-primary: #3b82f6;
+  --status-complete: #22c55e;
+  --status-partial: #f59e0b;
+  --status-skipped: #94a3b8;
+  --status-missed: #ef4444;
+  color-scheme: dark;
 }
 
-body {
-  background-color: var(--bg-canvas);
-  color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+/* 3. Sepia Theme (Academic Reading / Eye-Care Mode) */
+[data-theme='sepia'] {
+  --bg-canvas: #f4ecd8;
+  --bg-surface: #fdf8ee;
+  --bg-elevated: #eae0c8;
+  --text-primary: #2c221e;
+  --text-secondary: #6e5a4f;
+  --border-subtle: #d8cbb3;
+  --accent-primary: #b45309;
+  --status-complete: #15803d;
+  --status-partial: #b45309;
+  --status-skipped: #78716c;
+  --status-missed: #b91c1c;
+  color-scheme: light;
 }
 
-[dir="rtl"] body {
-  font-family: 'Vazirmatn', Tahoma, sans-serif;
+/* 4. Midnight OLED Theme (True Pitch Black) */
+[data-theme='oled'] {
+  --bg-canvas: #000000;
+  --bg-surface: #0a0a0c;
+  --bg-elevated: #141418;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --border-subtle: #22222a;
+  --accent-primary: #6366f1;
+  --status-complete: #10b981;
+  --status-partial: #f59e0b;
+  --status-skipped: #71717a;
+  --status-missed: #f43f5e;
+  color-scheme: dark;
+}
+
+@layer base {
+  html,
+  body,
+  input,
+  button,
+  select,
+  textarea {
+    font-family: 'Estedad', 'Vazirmatn RD', 'Vazirmatn', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    line-height: 1.65;
+    letter-spacing: -0.01em;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  /* جلوگیری از پرش ارقام در تایمرها و جداول آماری */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
 }

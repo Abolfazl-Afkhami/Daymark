@@ -3,6 +3,7 @@ import { categories } from '@/db/schema';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { createGoalAction } from '@/application/actions/goal-actions';
+import { DatePickerDropdown } from '@/components/ui/DatePickerDropdown';
 
 export default async function NewGoalPage() {
   const allCategories = await db.select().from(categories).all();
@@ -107,15 +108,13 @@ export default async function NewGoalPage() {
         </div>
 
         {/* Deadline */}
-        <div className="space-y-1.5">
-          <label htmlFor="deadlineDate" className="block text-xs font-semibold text-text-main">
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-text-main">
             مهلت زمانی (Deadline - اختیاری)
           </label>
-          <input
-            id="deadlineDate"
+          <DatePickerDropdown
             name="deadlineDate"
-            type="date"
-            className="w-full px-3 py-2 rounded-lg border border-border-subtle bg-canvas text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            placeholder="انتخاب مهلت زمانی هدف..."
           />
         </div>
 

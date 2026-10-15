@@ -36,6 +36,8 @@ export function addCivilDays(dateStr: CivilDate, days: number): CivilDate {
   return target.toISOString().slice(0, 10) as CivilDate;
 }
 
+export const addDaysToCivilDate = addCivilDays;
+
 export function diffCivilDays(a: CivilDate, b: CivilDate): number {
   const [y1, m1, d1] = a.split('-').map(Number) as [number, number, number];
   const [y2, m2, d2] = b.split('-').map(Number) as [number, number, number];

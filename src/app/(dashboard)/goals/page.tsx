@@ -62,6 +62,7 @@ export default async function GoalsPage() {
                 currentValue={g.manualCurrentValue}
                 unit={g.unit}
                 status={g.status}
+                progressSource={g.progressSource}
                 deadlineDate={g.deadlineDate}
               />
             );

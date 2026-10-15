@@ -1,12 +1,13 @@
 {
   "name": "daymark",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "seed": "node scripts/seed.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
